@@ -1,6 +1,6 @@
-#ReID Player API
-##Usage
-###依赖
+# ReID Player API
+## Usage
+### 依赖
 
 + python-flask
 + opencv3
@@ -9,7 +9,7 @@
 + echarts
 + semanticUI
 
-###使用方法
+### 使用方法
 ```
 启动服务器，通过localhost 5000端口即可访问
 python server.py
@@ -19,15 +19,15 @@ python server.py
 **接入算法API**
 
 为了接入reid相关的算法，只需修改reidAPIs.py即可，demo的其余部分将会调用该文件中的函数。
-##reidAPIs
-###renderTrackbar(find)
+## reidAPIs
+### renderTrackbar(find)
 
 渲染进度条，用于制作某个ID在整个视频中出现的概率，这里的只用将每一帧(fps可自定)
 > **find: list[N]**, find 为一个list，包含若干字符串，为需要查询的bbox的ID
 
 **Return => list(bbox_num,frame_num]**, 其中每一行为每一个人在每一帧出现的概率，范围[0,1]
 
-###renderVideo(find):
+### renderVideo(find):
 
 渲染视频，用于将所要查询的bbox在视频中的某一时刻出现的查询目标框出来，并返回框出的bbox信息
 需要注意的是，这里采用的是出现的时间而非帧号,时间单位为秒
@@ -35,7 +35,7 @@ python server.py
 
 **Return =>Numpy Array[total-frame-num]**, 返回一个list(bbox_num,6)，每一行为[y0,x0,y1,x1,time,ID]
 
-###saveBboxes(\_bboxes):
+### saveBboxes(\_bboxes):
 处理并保存由用户画出的bbox，这里做提取特征并导入数据库的操作
 
 > **\_bboxes**: 为画出的bbox字典，在这部分中，会将_bboxes先转化为bboxes numpy数组，而每个bbox的ID也会被存储在bboxesID中
@@ -45,7 +45,7 @@ python server.py
 
 
 
-##Issues
+## Issues
 
 部分问题将在下个版本中解决
 + 未提供方便同时修改前后端操作视频的接口
