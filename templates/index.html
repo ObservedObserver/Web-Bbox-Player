@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <link rel="stylesheet" href="<<: url_for('static', filename='semantic/semantic.css') :>>">
+    <!-- <script src="https://unpkg.com/vue"></script> -->
+    <script src="<<:url_for('static', filename='vue.js'):>>"></script>
+    <script src="<<:url_for('static', filename='jquery-3.2.1.js'):>>">
+
+    </script>
+    <script src="<<:url_for('static', filename='semantic/semantic.js'):>>">
+
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/3.6.2/echarts.js"></script>
+    <style media="screen">
+    body{
+      background-image: url("https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1503059941443&di=b61333655ca369a07c3bc1b42cfa705d&imgtype=jpg&src=http%3A%2F%2Fimg3.imgtn.bdimg.com%2Fit%2Fu%3D1520714267%2C3942578411%26fm%3D214%26gp%3D0.jpg");
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+    #board{
+      position: absolute;
+      width:100%;
+      height:100%;
+      z-index: 10;
+    }
+    #render-bar{
+      width:100%;
+      height:36px;
+      position: absolute;
+      z-index: 12;
+      bottom: 1rem;
+      left:0;
+    }
+    #check-form{
+      height:32rem;
+      overflow:scroll;
+    }
+    .bbox{
+      position: absolute;
+      border: 3px solid hsla(0, 100%, 65%, 0.78);
+      z-index: 11;
+      box-sizing: content-box;
+    }
+    .bbox-info{
+      position: absolute;
+      border: 3px solid rgba(255,79,79,0);
+      background-color: hsla(0, 100%, 65%, 0.78);
+      z-index: 11;
+      color: #fff;
+      box-sizing: content-box;
+
+    }
+    .ui.container{
+      margin-top: 2rem;
+    }
+    ::-webkit-scrollbar{
+      width: 2px !important;
+      height: 4px;
+      background-color: rgba(0,0,0,0);
+    }
+    /*定义滚动条的轨道，内阴影及圆角*/
+    ::-webkit-scrollbar-track{
+        border-radius: 1px;
+        background-color: rgba(0,0,0,0);
+    }
+    /*定义滑块，内阴影及圆角*/
+    ::-webkit-scrollbar-thumb{
+        width: 1px;
+        height: 20px;
+        border-radius: 1px;
+        -webkit-box-shadow: inset 0 0 1px rgba(0,0,0,0.2);
+        background-color: rgba(255,0,0,0.5);
+    }
+    </style>
+  </head>
+  <body>
+  <div id="app">
+    <div :class="modalClass">
+      <i class="close icon"></i>
+      <div class="header">
+        Bbox Image
+      </div>
+      <div class="image content">
+        <div class="ui medium image">
+          <img :src="imgDataURL">
+        </div>
+        <div class="description">
+          <div class="ui header">You can change the ID here!</div>
+          <p>Give a ID you prefer and it will be record in the database.</p>
+          <form class="ui form">
+            <div class="field">
+              <label>ID</label>
+              <input type="text" :placeholder="inputID" v-model="inputID">
+            </div>
+            <div class="field">
+              <button class="ui red button" type="button" name="button" @click="submitChange">Done</button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="ui black deny button">
+          Back
+        </div>
+        <div class="ui positive right labeled icon button">
+          The default ID is ok.
+          <i class="checkmark icon"></i>
+        </div>
+      </div>
+    </div>
+    <div class="ui container">
+
+      <div class="ui blue segment">
+
+        <div class="ui grid">
+          <div class="ui twelve wide column">
+            <div class="ui segment">
+              <div id="board" ref="board"
+              @mousedown.self="penDown($event)"
+              @mousemove="penMove($event)"
+              @mouseup="penUp($event)">
+                <div class="bbox" v-for="(bbox,index) in bboxes"
+                :style="bbox.style"
+                @mousedown="penDown($event)"></div>
+                <div class="bbox-info" v-for="(bbox,index) in bboxes"
+                :style="bbox.infoStyle"
+                @click.self="changeID(index,$event)"
+                >
+                  {{bbox.id}}
+                </div>
+
+                <div class="bbox" v-for="(bbox,index) in renderBboxes"
+                :style="bbox.style"
+                ></div>
+                <div class="bbox-info" v-for="(bbox,index) in renderBboxes"
+                :style="bbox.infoStyle"
+                >
+                  {{bbox.id}}
+                </div>
+
+              </div>
+              <video id="frame" ref="video"
+              @timeupdate = "updateTrackbar"
+              src="<<:url_for('static', filename='videos/spaceX.mp4'):>>" autoplay style="width:100%">
+
+              </video>
+              <div ref="renderbar" id="render-bar" style="width:100%;height:32px"></div>
+
+            </div>
+            <!-- <div ref="renderbar" style="width:100%;height:40px"></div> -->
+            <div class="ui active teal progress" id="progressor"
+            @mousedown="trackbarDown"
+
+            >
+              <div class="bar">
+                <div class="progress"></div>
+              </div>
+              <div class="label">{{parseInt(trackbar.pos)}}/{{trackbar.len}}</div>
+            </div>
+
+          </div>
+          <div class="ui four wide column">
+            <div class="ui segment">
+              <button :class="videoControllerClass" @click="videoControll" ref="play">{{videoController}}</button>
+              <button class="ui pink button" type="button" name="button" @click="saveBboxes">Save</button>
+              <div class="ui divider">
+
+              </div>
+              <button class="ui blue button" type="button" name="button">Button</button>
+              <button class="ui teal button" type="button" name="button">Button</button>
+            </div>
+            <div class="ui red segment" id="check-form">
+              <h3 class="ui header">Bboxes List</h3>
+              <p>Choose a bbox to check when it appears in the video.</p>
+              <div class="ui divider"></div>
+              <form class="ui form">
+                <div class="field" v-for="bbox in bboxes0">
+                  <input type="checkbox" :value="bbox.id" v-model="picked">
+                  {{bbox.id}}
+                </div>
+                <button class="ui tiny red button" type="button" @click="renderVideo">Find him!</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </body>
+  <script type="text/javascript">
+  var RenderBar = function(dom){
+    var self = this;
+    this._init = function(dom){
+      self.data = [];
+      self.option = {
+            grid: {
+                left: '1%',
+                right: '1%',
+                bottom: '1%',
+                top:'1%'
+            },
+            xAxis : [
+                {
+                    type : 'value',
+                    show: false,
+                    splitLine:{show:false},
+                }
+            ],
+            yAxis : [
+                {
+                    type : 'value',
+                    show: false,
+                    splitLine:{show:false}
+                }
+            ],
+            series : [
+                {
+                    type:'line',
+                    symbol:'none',
+                    areaStyle: {
+                      smooth:true,
+                      normal: {
+                        color:'hsla(0, 100%, 65%, 0.48)'
+                      }
+                    },
+                    data:this.data,
+                    itemStyle : {
+                      normal : {
+                        lineStyle:{
+                            color:'hsla(0, 100%, 65%, 0.78)'
+                        }
+                      }
+                    },
+                }
+            ]
+          };
+      self.myChart = echarts.init(dom);
+      self.myChart.setOption(self.option);
+    };
+    this.renderData = function(data){
+      self.data = data;
+      self.option.series = [];
+      for(var i=0;i<data.length;i++){
+        var _color = parseInt(Math.random()*360);
+        var sub_series = {
+            type:'line',
+            symbol:'none',
+            areaStyle: {
+              smooth:true,
+              normal: {
+                color:'hsla('+_color+', 100%, 65%, 0.48)'
+              }
+            },
+            data:data[i],
+            itemStyle : {
+              normal : {
+                lineStyle:{
+                    color:'hsla('+_color+', 100%, 65%, 0.78)'
+                }
+              }
+            },
+        };
+        self.option.series.push(sub_series);
+      }
+      self.myChart.setOption(self.option);
+    }
+    this._init(dom);
+  }
+  </script>
+  <script type="text/javascript">
+  // Vue.component('bbox',{
+  //   template:"<div :class='bbox'></div>"
+  // })
+  var app = new Vue({
+    el: '#app',
+    data: {
+      message: 'Hello Vue!',
+      scale:1280/814,
+      pen_is_finished:false,
+      videoController: 'Pause',
+      videoControllerClass:["ui","orange","button"],
+      penStatus:false,
+      bboxes:[],
+      bboxes0:[],
+      bboxes_length:0,
+      bboxes0_length:0,
+      board:{},
+      modalClass:["ui","modal"],
+      imgDataURL:"",
+      inputID:null,
+      changingBboxesPos:0,
+      renderBboxes:[],
+      renderBboxes0:[],
+      trackbar:{
+        pos:0,
+        stat:false,
+        len:1,
+        width:0,
+        left:0
+      },
+      renderbar:null,
+      picked:[],
+    },
+    methods: {
+      videoControll:function(){
+
+        if(this.videoController == "Pause"){
+          // pause the video
+          this.$refs.video.pause();
+          this.videoController = "Play";
+          this.videoControllerClass[1] = "green";
+        }
+        else{
+          // play the video
+          this.$refs.video.play();
+          this.bboxes = [];
+          this.bboxes_length = 0;
+          this.videoController = "Pause";
+          this.videoControllerClass[1] = "orange";
+        }
+
+      },
+      penDown:function(event){
+        // console.log(this.$refs.board.offsetLeft);
+        if(this.videoController == "Play"){
+          console.log("Pen Down.");
+          // console.log(this.board.x);
+          this.penStatus = true;
+          var _color = "hsla("+parseInt(Math.random()*360)+", 100%, 78%, 0.78)";
+          var _bbox = {
+            id:"ID-"+this.bboxes0_length,
+            data:{
+              x0:event.pageX - this.board.x,
+              y0:event.pageY - this.board.y,
+              x1:event.pageX - this.board.x,
+              y1:event.pageY - this.board.y,
+            },
+            style:{
+              left:(event.pageX - this.board.x) + "px",
+              top:(event.pageY - this.board.y) + "px",
+              width:0,
+              height:0,
+              borderColor:_color
+            },
+            infoStyle:{
+              left:(event.pageX - this.board.x) + "px",
+              top:(event.pageY - this.board.y) + "px",
+              width:0,
+              // height:0,
+              backgroundColor:_color,
+              display:"none"
+            }
+          };
+
+          this.bboxes.push(_bbox);
+          this.bboxes0.push(_bbox);
+          this.bboxes_length ++;
+          this.bboxes0_length ++;
+        }
+
+      },
+      penMove:function(event){
+        if(this.penStatus == true){
+          event.preventDefault();
+          this.bboxes[this.bboxes_length-1].style.width =  (event.pageX - this.board.x - this.bboxes[this.bboxes_length-1].data.x0) + "px";
+          this.bboxes[this.bboxes_length-1].style.height = (event.pageY - this.board.y - this.bboxes[this.bboxes_length-1].data.y0) + "px";
+          this.bboxes[this.bboxes_length-1].data.x1 = event.pageX - this.board.x;
+          this.bboxes[this.bboxes_length-1].data.y1 = event.pageY - this.board.y;
+        }
+
+      },
+      penUp:function(event){
+        if(this.penStatus == true){
+          this.bboxes[this.bboxes_length-1].style.width =  (event.pageX - this.board.x - this.bboxes[this.bboxes_length-1].data.x0) + "px";
+          this.bboxes[this.bboxes_length-1].style.height = (event.pageY - this.board.y - this.bboxes[this.bboxes_length-1].data.y0) + "px";
+          this.bboxes[this.bboxes_length-1].data.x1 = event.pageX - this.board.x;
+          this.bboxes[this.bboxes_length-1].data.y1 = event.pageY - this.board.y;
+
+          this.bboxes[this.bboxes_length-1].infoStyle.top = (this.bboxes[this.bboxes_length-1].data.y1 + 6) + "px";
+          this.bboxes[this.bboxes_length-1].infoStyle.width = this.bboxes[this.bboxes_length-1].style.width;
+          this.bboxes[this.bboxes_length-1].infoStyle.display = "inline-block";
+
+          this.bboxes0[this.bboxes0_length-1] = this.bboxes[this.bboxes_length-1];
+          // //can use bboxes0[pos] = bboxes[pos], but i am not sure the risk for now.
+          // this.bboxes0[this.bboxes0_length-1].style.width =  (event.pageX - this.board.x - this.bboxes0[this.bboxes0_length-1].data.x0) + "px";
+          // this.bboxes0[this.bboxes0_length-1].style.height = (event.pageY - this.board.y - this.bboxes0[this.bboxes0_length-1].data.y0) + "px";
+          // this.bboxes0[this.bboxes0_length-1].data.x1 = event.pageX - this.board.x;
+          // this.bboxes0[this.bboxes0_length-1].data.y1 = event.pageY - this.board.y;
+          //
+          // this.bboxes0[this.bboxes0_length-1].infoStyle.top = (this.bboxes0[this.bboxes0_length-1].data.y1 + 6) + "px";
+          // this.bboxes0[this.bboxes0_length-1].infoStyle.width = this.bboxes0[this.bboxes0_length-1].style.width;
+          // this.bboxes0[this.bboxes0_length-1].infoStyle.display = "inline-block";
+          // xes[this.bboxes0_length-1].data.y1 + 3) ;
+          this.penStatus = false;
+          console.log("Pen up.");
+        }
+      },
+      changeID:function(i,event){
+        console.log("Start change ID.");
+        this.changingBboxesPos = i;
+        // this.modalClass.active = true;
+        // this.modalClass.push("active");
+        var bboxCanvas = document.createElement("canvas");
+        bboxCanvas.width =  this.bboxes[i].data.x1-this.bboxes[i].data.x0;
+        bboxCanvas.height =  this.bboxes[i].data.y1-this.bboxes[i].data.y0;
+        var ctx = bboxCanvas.getContext("2d");
+        // console.log( bboxs[i].x, bboxs[i].y, bboxs[i].width, bboxs[i].height, bboxs[i].width*scale,bboxs[i].height*scale);
+        ctx.drawImage(this.$refs.video,
+                      this.bboxes[i].data.x0*this.scale,
+                      this.bboxes[i].data.y0*this.scale,
+                      bboxCanvas.width*this.scale,
+                      bboxCanvas.width*this.scale,
+
+                      0,0,
+                      bboxCanvas.width,bboxCanvas.width
+                    );
+        this.imgDataURL = bboxCanvas.toDataURL();
+        // $("#tmp").append("<img src='"+bboxCanvas.toDataURL()+"'>");
+
+        this.inputID = this.bboxes[i].id;
+        $(".ui.modal").modal("show");
+      },
+      submitChange:function(){
+        console.log("ID Changed successfully");
+        this.bboxes[this.changingBboxesPos].id = this.inputID;
+        console.log(this.bboxes[this.changingBboxesPos].id);
+        $(".ui.modal").modal("hide");
+      },
+      updateTrackbar:function(event){
+        // console.log(this.$refs.video.duration,this.trackbar.len,"+++");
+        this.trackbar.pos = this.$refs.video.currentTime*100 / this.$refs.video.duration;
+        $("#progressor").progress({percent: this.trackbar.pos});
+      },
+      trackbarDown:function(event){
+        console.log("change the currentTime of video");
+        this.trackbar.stat = true;
+
+        this.trackbar.pos = 100*(event.pageX - this.trackbar.left) / this.trackbar.width;
+        $("#progressor").progress({percent: this.trackbar.pos});
+        this.$refs.video.currentTime = this.trackbar.pos * this.$refs.video.duration / 100;
+      },
+      trackbarMove:function(event){
+        if(this.trackbar.stat == true){
+          this.trackbar.pos = 100*(event.pageX - this.trackbar.left) / this.trackbar.width;
+          $("#progressor").progress({percent: this.trackbar.pos});
+          this.$refs.video.currentTime = this.trackbar.pos * this.$refs.video.duration / 100;
+        }
+      },
+      trackbarUp:function(event){
+        if(this.trackbar.stat == true){
+          this.trackbar.pos = 100*(event.pageX - this.trackbar.left) / this.trackbar.width;
+          $("#progressor").progress({percent: this.trackbar.pos});
+          this.$refs.video.currentTime = this.trackbar.pos * this.$refs.video.duration / 100;
+          this.trackbar.stat = false;
+        }
+      },
+      renderVideo:function(){
+        var self = this;
+        $.ajax({
+          url:"http://localhost:5000/render/trackbar",
+          method:"POST",
+          dataType:"json",
+          data: JSON.stringify({
+              find:self.picked
+          }),
+          success:function(resp){
+            self.renderbar.renderData(resp.prob);
+            self.renderBboxes0 = resp.bboxes;
+            console.log("return rendered bboxes:",resp.bboxes);
+            setInterval(function(){
+              self.drawRenderBboxes();
+            },125)
+          }
+        });
+
+      },
+      drawRenderBboxes:function(){
+        // console.log("painting invertal.");
+        var _currentTime = this.$refs.video.currentTime * 1000, b_len = this.renderBboxes0.length;
+        this.renderBboxes = [];
+        for(var i=0;i<b_len;i++){
+          if(this.renderBboxes0[i].time* 1000 >= _currentTime - 120 && this.renderBboxes0[i].time* 1000 <= _currentTime + 120){
+            this.renderBboxes.push(this.renderBboxes0[i]);
+          }
+        }
+      },
+      saveBboxes:function(){
+        var self = this;
+        $.ajax({
+          url:"http://localhost:5000/api/bboxes",
+          method:"POST",
+          dataType:"json",
+          data: JSON.stringify({
+              bboxes:this.bboxes0
+          }),
+          success:function(resp){
+            console.log("success!!!");
+          }
+        });
+      }
+    },
+    created:function(){
+    },
+    mounted:function(){
+      this.board.x = $("#frame").offset().left;
+
+      this.board.y = $("#frame").offset().top;
+
+      this.board.width = this.$refs.board.offsetWidth;
+      // console.log("the board width is",this.board.width);
+      this.board.height = this.$refs.board.offsetHeight;
+
+      this.scale = 1280/this.board.width;
+
+      // this.trackbar.len = this.$refs.video.duration;
+      // cannot get duration here.
+      this.trackbar.left = $("#progressor").offset().left;
+      this.trackbar.width = $("#progressor").width();
+      console.log(this.trackbar.len,this.$refs.video.duration);
+      $("#progressor").progress({percent:0});
+      // this.trackbar.len = this.$refs.video.duration;
+      // this.trackbar.left = $("#progressor").offset().left;
+      // this.trackbar.width = $("#progressor").width();
+      // console.log(this.trackbar.len,this.$refs.video.duration);
+      // $("#progressor").progress({percent:0});
+      this.renderbar = new RenderBar(this.$refs.renderbar);
+
+    },
+    updated:function(){
+      // this.trackbar.len = this.$refs.video.duration;
+      // this.trackbar.left = $("#progressor").offset().left;
+      // this.trackbar.width = $("#progressor").width();
+      // console.log(this.trackbar.len,this.$refs.video.duration);
+      // $("#progressor").progress({percent:0});
+    }
+    })
+  </script>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/3.6.2/echarts.js"></script>
+  <body>
+    <div id="main" style="width: 600px;height:40px;"></div>
+    <script type="text/javascript">
+    var myChart = echarts.init(document.getElementById('main'));
+    data = [[0,-80],[1,-20],[2,-6],[3,-0],[4,-99],[5,-98]]
+    option = {
+        grid: {
+            left: '1%',
+            right: '1%',
+            bottom: '1%',
+            top:'1%'
+            // containLabel: true
+        },
+        xAxis : [
+            {
+                type : 'value',
+                show: false,
+                position:'top',
+                splitLine:{show:false},
+            }
+        ],
+        yAxis : [
+            {
+                type : 'value',
+                show: false,
+                splitLine:{show:false}
+            }
+        ],
+        series : [
+            {
+                name:'prob',
+                type:'line',
+                stack: 'prob',
+                symbol:'none',
+                areaStyle: {
+                  smooth:true,
+                  normal: {
+                    color:'rgb(167, 237, 96)'
+                  }
+                },
+                data:data,
+                itemStyle : {
+                  normal : {
+                    lineStyle:{
+                        color:'#00FF00'
+                    }
+                  }
+                },
+            }
+        ]
+      };
+    myChart.setOption(option);
+    </script>
+  </body>
+</html>

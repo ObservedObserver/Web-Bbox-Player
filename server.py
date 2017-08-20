@@ -5,32 +5,18 @@ from flask import request
 import json
 import base64
 import time
-
+import reidAPIs
 app = flask.Flask(__name__)
+
+app.jinja_env.variable_start_string = '<<:'
+app.jinja_env.variable_end_string = ':>>'
+
 video = cv2.VideoCapture("init.mp4")
 
-@app.route('/',methods=['POST'])
-def video_frame():
-    fid = int(request.values.get("fid"))
-    video.set(cv2.CAP_PROP_POS_FRAMES,fid)
-    # response = flask.make_response(json_du)
-    # response = flask.make_response("/var/www/html/frame/p-v-"+str(fid)+".jpg")
-    # response.headers["Access-Control-Allow-Origin"] = "*"
-    _, frame = video.read()
-    time1 = time.time()
-    cv2.imwrite("/var/www/html/frame/p-v-"+str(fid)+".jpg", frame)
-    time2 = time.time()
-    print(time1 - time2)
-    f = open("/var/www/html/frame/p-v-"+str(fid)+".jpg","rb")
-    frame_str = base64.b64encode(f.read())
-    print(frame_str[:3])
-    f.close()
-    response = flask.make_response(json.dumps({
-        "img":frame_str
-    }))
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    return response
-@app.route("/save",methods = ["POST"])
+@app.route('/',methods=['GET'])
+def index():
+    return flask.render_template('index.html')
+@app.route("/oldsave",methods = ["POST"])
 def save_images():
     print("***"*10)
     print(request)
@@ -55,7 +41,53 @@ def save_images():
         print(frame)
         # cv2.imshow("tmp"+str(image["x"]),frame[image["y"]:image["y"]+image["height"],image["x"],image["x"]+image["width"]])
 
-    response = flask.make_response("success")
+    response = flask.make_response(json.dumps({
+        "prob":[[0,1]]
+    }))
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
+
+@app.route("/render/trackbar",methods=['POST'])
+def render_request():
+    print("/render/trackbar -- reqquset data:===")
+    print(request.get_data())
+    postData = eval(request.get_data())
+    # find apperance
+    data = reidAPIs.renderTrackbar(postData["find"])
+    bboxes = reidAPIs.renderVideo(postData["find"])
+    js_bboxes = []
+    i = 0
+    for bbox in bboxes:
+        js_bbox = {
+                "id":bbox[5],
+                "time":bbox[4],
+                "style":{
+                  "left":str(bbox[1]) + "px",
+                  "top":str(bbox[0]) + "px",
+                  "width":str(bbox[3] - bbox[1]) + "px",
+                  "height":str(bbox[2] - bbox[0]) + "px",
+                  "borderColor":"hsla(0, 100%, 78%, 0.78)"
+                },
+                "infoStyle":{
+                  "left":str(bbox[1]) + "px",
+                  "top":str(bbox[2] + 6) + "px",
+                  "width":str(bbox[3] - bbox[1]) + "px",
+                  "backgroundColor":"hsla(0, 100%, 78%, 0.78)",
+                }
+              }
+        js_bboxes.append(js_bbox)
+        i += 1
+    response = flask.make_response(json.dumps({"prob":data,"bboxes":js_bboxes}))
+
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
+
+@app.route("/api/bboxes", methods=['POST'])
+def get_bboxes():
+    postData = eval(request.get_data())
+    # find apperance
+    data = reidAPIs.saveBboxes(postData["bboxes"])
+    response = flask.make_response(json.dumps({}))
     response.headers["Access-Control-Allow-Origin"] = "*"
     return response
 

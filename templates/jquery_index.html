@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <script
+  src="http://code.jquery.com/jquery-3.2.1.js"
+  integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE="
+  crossorigin="anonymous"></script>
+  <script src="semantic/semantic.js"></script>
+  <link rel="stylesheet" href="semantic/semantic.css">
+  <style media="screen">
+  body{
+    margin:0px;
+    background-color: rgb(185, 189, 186);
+  }
+    #board{
+      position: absolute;
+      z-index: 10;
+      width:800px;
+      height:600px;
+    }
+    .bbox{
+      position: absolute;
+      border: 3px solid hsla(0, 100%, 65%, 0.78);
+      z-index: 11;
+      box-sizing: content-box;
+    }
+    .bbox-info{
+      position: absolute;
+      border: 3px solid rgba(255,79,79,0);
+      background-color: hsla(0, 100%, 65%, 0.78);
+      z-index: 11;
+      color: #fff;
+      box-sizing: content-box;
+
+    }
+  </style>
+</head>
+<body>
+  <div class="ui modal">
+    <i class="close icon"></i>
+    <div class="header">
+      Bbox Image
+    </div>
+    <div class="image content">
+      <div class="ui medium image">
+        <img id="editimg" src="/images/avatar/large/chris.jpg">
+      </div>
+      <div class="description">
+        <div class="ui header">You can change the ID here!</div>
+        <p>Give a ID you prefer and it will be record in the database.</p>
+        <form class="ui form">
+          <div class="field">
+            <label>ID</label>
+            <input id="input-id" type="text" name="" value="">
+          </div>
+          <div class="field">
+            <button class="ui red button" id="reid" type="button" name="button">Done</button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+    <div class="actions">
+      <div class="ui black deny button">
+        Back
+      </div>
+      <div class="ui positive right labeled icon button">
+        The default ID is ok.
+        <i class="checkmark icon"></i>
+      </div>
+    </div>
+  </div>
+  <div class="ui container">
+    <div class="ui teal segment" style="margin-top:40px">
+
+
+      <div class="ui grid">
+        <div class="ten wide column">
+          <div class="ui segment">
+            <div style="width:660px">
+              <div id="board" style="width:100%;height:100%">
+
+              </div>
+              <!-- <img src="yn.jpg" id="frame" style="width:100%;height:100%"> -->
+              <video src="init.mp4" id="frame" style="width:100%;height:100%" autoplay>
+
+              </video>
+            </div>
+          </div>
+
+        </div>
+        <div class="six wide column">
+          <div class="ui segment">
+            <button type="button" id="play" class="ui button" name="button">Play</button>
+            <button type="button" id="pause" class="ui green button" name="button">Pause</button>
+            <button type="button" id="finish" class="ui red button" name="button">Finish</button>
+            <button type="button" id="print" class="ui orange button" name="button">Print</button>
+          </div>
+
+        </div>
+      </div>
+      <div class="ui segment" id="tmp">
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript">
+  var stat = false, _left = 0, _top = 0, bbox_num = 0, bboxs = [], frameX, frameY, color_h = 0;
+  var fid = 0;
+  $("#play").click(function(){
+    stat = false
+      $("#board").empty();
+     $("#frame")[0].play();
+    //  $("#board").mousedown(function(event){
+    //    color_h = parseInt(Math.random()*360);
+     //
+    //    // event.stopPropagation();
+    //    event.stopPropagation();
+    //    console.log("md");
+    //    // $("<div>",{
+    //    //   "class":"bbox",
+    //    // }).insertAfter("#board");
+    //    $("#board").append("<div class='bbox'></div>");
+    //    $("#board .bbox:last").css({"border":"3px solid hsla("+color_h+", 100%, 65%, 0.78)"});
+    //    $("#board .bbox:last").offset({"left":event.pageX, "top":event.pageY});
+    //    stat = true;
+    //    _left = event.pageX;
+    //    _top = event.pageY;
+    //    console.log(event.pageY);
+    //  });
+
+  });
+  $("#pause").click(function(){
+    $("#frame")[0].pause();
+  });
+  // $("#pause").click(function(){
+  //   clearInterval(inter);
+  // });
+  var scale = 1280/660;
+  console.log(scale);
+  $("#finish").click(function(){
+    $("#board").unbind("mousedown");
+    console.log("The Board events are clear.");
+
+    var handler = function(i){
+      var j = i;
+      return function(){
+        var bboxCanvas = document.createElement("canvas");
+        var ctx = bboxCanvas.getContext("2d");
+        ctx.drawImage($("#frame")[0], bboxs[j].x*scale, bboxs[j].y*scale, bboxs[j].width*scale, bboxs[j].height*scale,0,0, bboxs[j].width,bboxs[j].height);
+        $("#editimg").attr("src",bboxCanvas.toDataURL());
+        event.stopPropagation();
+        $("#input-id")[0].value = ($("#board .bbox-info:eq("+j+")").text());
+        $('.ui.modal').modal('show');
+        $("#reid").click(function(){
+          // console.log($("#input-id").val());
+          // $("#input-id")[0].value = ($("#board .bbox-info:eq("+i+")").text());
+          // console.log($("#input-id")[0].val());
+          $("#board .bbox-info:eq("+i+")").text($("#input-id").val());
+          $('.ui.modal').modal('hide');
+        })
+      };
+    };
+    for(var i=0;i<bbox_num;i++){
+      $("#board .bbox-info:eq("+i+")").click(handler(i));
+    }
+  });
+
+  frameX = $("#frame").offset().left;
+  frameY = $("#frame").offset().top;
+    $("#board").mousedown(function(event){
+      color_h = parseInt(Math.random()*360);
+
+      // event.stopPropagation();
+      event.stopPropagation();
+      console.log("md");
+      // $("<div>",{
+      //   "class":"bbox",
+      // }).insertAfter("#board");
+      $("#board").append("<div class='bbox'></div>");
+      $("#board .bbox:last").css({"border":"3px solid hsla("+color_h+", 100%, 65%, 0.78)"});
+      $("#board .bbox:last").offset({"left":event.pageX, "top":event.pageY});
+      stat = true;
+      _left = event.pageX;
+      _top = event.pageY;
+      console.log(event.pageY);
+    });
+
+    $(document).mousemove(function(event){
+      if(stat == true){
+        // console.log(true);
+        // console.log(event.pageX - left);
+        // console.log(event.pageY , top);
+        $("#board .bbox:last").css({
+          "width":event.pageX - _left,
+          "height":event.pageY - _top
+        });
+      }
+    });
+
+    $(document).mouseup(function(event){
+      if(stat == true){
+        stat = false;
+        if(event.pageX - _left >= 20 && event.pageY - _top >= 20){
+          bbox_num ++;
+          bboxs.push({"x":_left-frameX,"y":_top-frameY,"width":event.pageX - _left,"height":event.pageY - _top});
+          $("#board").append("<div class='bbox-info'></div>");
+          $("#board .bbox-info:last").offset({"left":_left, "top":event.pageY + 6});
+          $("#board .bbox-info:last").css({
+            "width": event.pageX - _left,
+            "min-height": "1rem",
+            "background-color":"hsla("+color_h+", 100%, 65%, 0.78)"
+          });
+          $("#board .bbox-info:last").text("PID:" + bbox_num);
+          // $("#board .bbox-info:last").click(function(bbox_num){
+          //   // $("#editimg").attr("src",);
+          //   console.log(bbox_num);
+          //   return function(){
+          //     var bboxCanvas = document.createElement("canvas");
+          //     var ctx = bboxCanvas.getContext("2d");
+          //     console.log(bboxs);
+          //     ctx.drawImage($("#frame")[0], bboxs[bbox_num-1].x, bboxs[bbox_num-1].y, bboxs[bbox_num-1].width, bboxs[bbox_num-1].height,0,0, bboxs[bbox_num-1].width*0.5,bboxs[bbox_num-1].height*0.5);
+          //     $("#editimg").attr("src",bboxCanvas.toDataURL());
+          //     event.stopPropagation();
+          //     console.log("gg");
+          //     $('.ui.modal').modal('show');
+          //   }
+          //
+          // });
+
+        }
+        else{
+          $("#board .bbox:last").remove();
+        }
+
+      }
+    });
+    $("#print").click(function(){
+      var post_data = {
+        images:bboxs,
+        scale:scale,
+        currentTime:$("#frame")[0].currentTime
+      };
+      $.ajax({
+        url:"http://localhost:5000/save",
+        method:"POST",
+        dataType:"json",
+        // contentType: "application/json; charset=utf-8",
+        data: JSON.stringify(post_data),
+        // data:{
+        //   images:bboxs,
+        //   scale:$("#frame")[0].currentTime,
+        //   currentTime:$("#frame")[0].currentTime
+        // },
+        success:function(resp){
+          conosle.log(resp);
+        }
+      });
+
+      console.log("pen");
+      for(var i=0;i<bbox_num;i++){
+        var bboxCanvas = document.createElement("canvas");
+        bboxCanvas.width =  bboxs[i].width;
+        bboxCanvas.height =  bboxs[i].height;
+        var ctx = bboxCanvas.getContext("2d");
+        console.log( bboxs[i].x, bboxs[i].y, bboxs[i].width, bboxs[i].height, bboxs[i].width*scale,bboxs[i].height*scale);
+        ctx.drawImage($("#frame")[0], bboxs[i].x*scale, bboxs[i].y*scale, bboxs[i].width*scale, bboxs[i].height*scale,0,0, bboxs[i].width,bboxs[i].height);
+        $("#tmp").append("<img src='"+bboxCanvas.toDataURL()+"'>");
+      }
+    });
+  </script>
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
