@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding:uft-8 -*-
+# -*- coding:utf-8 -*-
 import json
 import random
 import numpy as np
