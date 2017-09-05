@@ -56,6 +56,7 @@ var app = new Vue({
         var _color = "hsla("+parseInt(Math.random()*360)+", 100%, 78%, 0.78)";
         var _bbox = {
           id:"ID-"+this.bboxes0_length,
+          time: this.$refs.video.currentTime,
           data:{
             x0:event.pageX - this.board.x,
             y0:event.pageY - this.board.y,

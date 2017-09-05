@@ -6,6 +6,7 @@ import json
 import base64
 import time
 import reidAPIs
+import model
 app = flask.Flask(__name__)
 
 app.jinja_env.variable_start_string = '<<:'
@@ -93,3 +94,4 @@ def get_bboxes():
 
 if __name__ == "__main__":
     app.run(debug=True)
+    # model.build_model()
