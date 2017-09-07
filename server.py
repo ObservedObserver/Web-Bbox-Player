@@ -93,5 +93,6 @@ def get_bboxes():
     return response
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # app.run(debug=True)
+    app.run(host='0.0.0.0')
     # model.build_model()
