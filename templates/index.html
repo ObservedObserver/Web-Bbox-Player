@@ -123,7 +123,8 @@
               <div id="board" ref="board"
               @mousedown.self="penDown($event)"
               @mousemove="penMove($event)"
-              @mouseup="penUp($event)">
+              @mouseup="penUp($event)"
+              style="width:786px;height:452px">
                 <div class="bbox" v-for="(bbox,index) in bboxes"
                 :style="bbox.style"
                 @mousedown="penDown($event)"></div>
@@ -146,7 +147,7 @@
               </div>
               <video id="frame" ref="video"
               @timeupdate = "updateTrackbar"
-              src="<<:url_for('static', filename='videos/spaceX.mp4'):>>" autoplay style="width:100%">
+              src="<<:url_for('static', filename='videos/p2.mp4'):>>" autoplay style="width:100%">
 
               </video>
               <div ref="renderbar" id="render-bar" style="width:100%;height:32px"></div>
@@ -280,7 +281,7 @@
     el: '#app',
     data: {
       message: 'Hello Vue!',
-      scale:1280/814,
+      scale:640/786,
       pen_is_finished:false,
       videoController: 'Pause',
       videoControllerClass:["ui","orange","button"],
@@ -334,6 +335,8 @@
           var _color = "hsla("+parseInt(Math.random()*360)+", 100%, 78%, 0.78)";
           var _bbox = {
             id:"ID-"+this.bboxes0_length,
+            time:this.$refs.video.currentTime,
+            scale:this.scale,
             data:{
               x0:event.pageX - this.board.x,
               y0:event.pageY - this.board.y,
@@ -414,10 +417,10 @@
                       this.bboxes[i].data.x0*this.scale,
                       this.bboxes[i].data.y0*this.scale,
                       bboxCanvas.width*this.scale,
-                      bboxCanvas.width*this.scale,
+                      bboxCanvas.height*this.scale,
 
                       0,0,
-                      bboxCanvas.width,bboxCanvas.width
+                      bboxCanvas.width,bboxCanvas.height
                     );
         this.imgDataURL = bboxCanvas.toDataURL();
         // $("#tmp").append("<img src='"+bboxCanvas.toDataURL()+"'>");
@@ -515,7 +518,7 @@
       // console.log("the board width is",this.board.width);
       this.board.height = this.$refs.board.offsetHeight;
 
-      this.scale = 1280/this.board.width;
+      this.scale = 640/this.board.width;
 
       // this.trackbar.len = this.$refs.video.duration;
       // cannot get duration here.
