@@ -92,6 +92,7 @@ def saveBboxes(_bboxes):
         bboxesID.append(_bbox["id"])
     bboxes = np.array(_bboxes_list)
     bboxes = bboxes / float(_bboxes[0]["scale"])
+    bboxes = bboxes.astype(int)
     inputs = []
     i = 0
     for bbox in bboxes:
