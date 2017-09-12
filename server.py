@@ -91,5 +91,34 @@ def get_bboxes():
     response.headers["Access-Control-Allow-Origin"] = "*"
     return response
 
+@app.route("/render/image", methods=["POST"])
+def render_image():
+    postData = eval(request.get_data())
+    bboxes = reidAPIs.renderVideo(postData["find"], float(postData["time"]))
+    js_bboxes = []
+    i = 0
+    for bbox in bboxes:
+        js_bbox = {
+                "id":bbox[5],
+                # "time":bbox[4],
+                "style":{
+                  "left":str(bbox[1]) + "px",
+                  "top":str(bbox[0]) + "px",
+                  "width":str(bbox[3] - bbox[1]) + "px",
+                  "height":str(bbox[2] - bbox[0]) + "px",
+                  "borderColor":"hsla(0, 100%, 78%, 0.78)"
+                },
+                "infoStyle":{
+                  "left":str(bbox[1]) + "px",
+                  "top":str(bbox[2] + 6) + "px",
+                  "width":str(bbox[3] - bbox[1]) + "px",
+                  "backgroundColor":"hsla(0, 100%, 78%, 0.78)",
+                }
+              }
+        js_bboxes.append(js_bbox)
+        i += 1
+    response = flask.make_response(json.dumps({"bboxes":js_bboxes}))
+
+    response.headers["Access-Control-Allow-Origin"] = "*"
 if __name__ == "__main__":
     app.run(debug=True)

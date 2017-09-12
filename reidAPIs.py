@@ -7,15 +7,15 @@ import cv2
 import sys
 sys.path.append('../personDetection')
 import model
-import os 
+import os
 
-sess,  node, gallery_path, testDeal, gpu_now= model.build_model()
+sess,  node, gallery_path, testDeal, gpu_now = model.build_model()
 #if os.path.isfile(gallery_path):
 #    with open(gallery_path, 'wb') as f:
 #        gallery = json.load(f)
 #else:
 gallery = {}
-VIDEO_PATH = "./static/videos/init.mp4"
+VIDEO_PATH = "./static/videos/p2.mp4"
 video = cv2.VideoCapture(VIDEO_PATH)
 # 渲染进度条，用于制作某个ID在整个视频中出现的概率，这里的只用将每一帧(fps可自定)
 # 参数 find 为一个list，包含若干字符串，为需要查询的bbox的ID
@@ -53,13 +53,29 @@ def renderVideo(find):
     for i in range(video_length):
         video.set(cv2.CAP_PROP_POS_MSEC, i)
         success, image = video.read()
-        detect_result = model.detect_reid(sess, image, gallery, testDeal, node)
+        detect_results = model.detect_reid(sess, image, gallery, testDeal, node)
+        for detect_result in detect_results:
+            _tmp = [detect_result["bbx"][0],detect_result["bbx"][1],
+            detect_result["bbx"][2],detect_result["bbx"][3],
+            i/10.0,
+            detect_result["id"]]
+            if detect_result["id"] in find:
+                resp_bboxes.append(_tmp)
 
+    return resp_bboxes
+
+def renderImage(find, tim):
+    print("[renderImage]Picked are:",find)
+    video.set(cv2.CAP_PROP_POS_MSEC, tim)
+    success, image = video.read()
+    detect_results = model.detect_reid(sess, image, gallery, testDeal, node)
+    for detect_result in detect_results:
         _tmp = [detect_result["bbx"][0],detect_result["bbx"][1],
         detect_result["bbx"][2],detect_result["bbx"][3],
         i/10.0,
         detect_result["id"]]
-        resp_bboxes.append(_tmp)
+        if detect_result["id"] in find:
+            resp_bboxes.append(_tmp)
 
     return resp_bboxes
 
