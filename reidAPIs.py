@@ -4,10 +4,18 @@ import json
 import random
 import numpy as np
 import cv2
+import sys
+sys.path.append('../personDetection')
 import model
+import os 
 
-sess, node = model.build_model()
-VIDEO_PATH = "/static/videos/init.mp4"
+sess,  node, gallery_path, testDeal, gpu_now= model.build_model()
+#if os.path.isfile(gallery_path):
+#    with open(gallery_path, 'wb') as f:
+#        gallery = json.load(f)
+#else:
+gallery = {}
+VIDEO_PATH = "./static/videos/init.mp4"
 video = cv2.VideoCapture(VIDEO_PATH)
 # 渲染进度条，用于制作某个ID在整个视频中出现的概率，这里的只用将每一帧(fps可自定)
 # 参数 find 为一个list，包含若干字符串，为需要查询的bbox的ID
@@ -24,7 +32,8 @@ def renderTrackbar(find):
     success, image = video.read()
     j = 0
     while(success):
-        detect_result = model.detect_reid(sess, image, node["image_node"], node["gallery_path"])
+        detect_result = model.detect_reid(sess, image, gallery, testDeal, node,
+                                          save_path=None)
         for detect_data in detect_result:
             ans[find.index(detect_data["id"])][j][1] = int(detect_data["prob"]*100)
         j = j + 1
@@ -44,7 +53,7 @@ def renderVideo(find):
     for i in range(video_length):
         video.set(cv2.CAP_PROP_POS_MSEC, i)
         success, image = video.read()
-        detect_result = model.detect_reid(sess, image, node["image_node"], node["gallery_path"])
+        detect_result = model.detect_reid(sess, image, gallery, testDeal, node)
 
         _tmp = [detect_result["bbx"][0],detect_result["bbx"][1],
         detect_result["bbx"][2],detect_result["bbx"][3],
@@ -80,7 +89,7 @@ def saveBboxes(_bboxes):
         # inputs.append(image)
         i = i + 1
     # 在这里，已经获得可以使用的bboxes(np array,[N,4])与bboxesID(list)
-    res_vec = model.getGallery(sess, inputs, bboxesID, node["gallery_path"], node["apr_input"], node["img_vec"])
+    res_vec = model.getGallery(sess, inputs, bboxesID, gallery_path, node)
     # print(bboxes)
     # print(bboxesID)
     print("[getGallery] return:", res_vec)
